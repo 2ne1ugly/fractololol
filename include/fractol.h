@@ -6,7 +6,7 @@
 /*   By: mchi <mchi@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/03/04 12:57:34 by mchi              #+#    #+#             */
-/*   Updated: 2019/03/15 11:45:04 by mchi             ###   ########.fr       */
+/*   Updated: 2019/03/30 16:54:44 by mchi             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 # define PI 3.14159265359
 # define MAGENTA 0x00FF00
+# define N_THREAD 16
 
 # define X 0
 # define Y 1
@@ -59,8 +60,14 @@ typedef struct	s_wnd
 	t_coord			min;
 	double			step;
 	t_coord			c;
-	double			dim;
+	int				dim;
 	int				changed;
+	int				mode;
+	int				prev_x;
+	int				prev_y;
+	int				x;
+	int				y;
+	int				change_val;
 }				t_wnd;
 
 typedef struct	s_app
@@ -71,46 +78,47 @@ typedef struct	s_app
 	int			prev_y;
 	int			x;
 	int			y;
-	int			in_zoom;
 	int			argc;
 	char		**argv;
 	t_wnd		*exposed_wnd;
 }				t_app;
 
-typedef struct	s_julia_arg
-{
-	t_coord		*c;
-}				t_julia_arg;
-
 typedef struct	s_thread_arg
 {
 	t_wnd		*wnd;
-	int			i;
-	int			j;
 	double		min_r;
 	double		min_i;
 	double		step;
-	void		*arg;
+	void		*render_arg;
 }				t_thread_arg;
+
+typedef struct	s_local_arg
+{
+	int				i;
+	t_thread_arg	*thread_arg;
+}				t_local_arg;
 
 t_app			*init_app(int argc, char **argv);
 int				init_img(t_app *app, t_wnd *wnd);
 int				init_wnd(t_app	*app);
 
-t_coord			complex_add(t_coord lhs, t_coord rhs);
-t_coord			complex_pow(t_coord *coord, double dim);
+void			complex_add(t_coord *lhs, t_coord rhs);
+t_coord			complex_pow(t_coord *coord, int dim);
 double			complex_length(t_coord *coord);
-t_coord 		build_coord(double r, double i);
 
-t_uint			calc_loop(t_coord coord, t_coord c, double dim);
-t_uint			calc_loop_2(t_coord coord, t_coord c);
-t_uint			calc_color(t_uint itr);
+t_uint			calc_loop(t_coord *coord, t_coord c, int dim);
+t_uint			calc_loop_2(t_coord *coord, t_coord c);
+int				calc_color(t_uint itr, t_coord *zn, int mode);
 void			draw_julia(t_wnd *wnd, t_coord min, double step, t_coord c);
 void			img_pixel_put(t_wnd *wnd, int x, int y, t_uint color);
 
-void			draw_multibrot(t_wnd *wnd, t_coord min, double step, double dim);
+void			draw_multibrot(t_wnd *wnd, t_coord min, double step, int dim);
 
-int				julia_key_press(int keycode, void *param);
+int				julia_mouse_move(int x, int y, void *param);
+int				mandelia_key_press(int keycode, void *param);
+int 			mandelia_mouse_press(int button, int x, int y, void *param);
+int				multibrot_key_press(int keycode, void *param);
+int 			multibrot_mouse_press(int button, int x, int y, void *param);
 
 void			run_pixels(t_thread_arg	*arg, void *(*routine)(void	*));
 

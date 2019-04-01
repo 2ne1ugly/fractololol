@@ -6,48 +6,52 @@
 /*   By: mchi <mchi@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/03/15 11:21:59 by mchi              #+#    #+#             */
-/*   Updated: 2019/03/15 12:12:19 by mchi             ###   ########.fr       */
+/*   Updated: 2019/03/30 12:55:41 by mchi             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fractol.h"
+#include <stdio.h>
 
 void	join_pool(pthread_t	*thread_pool, int num)
 {
-	int	i;
-	int	*hold;
+	int		i;
+	void	*hold;
 
 	i = 0;
-	hold = malloc(sizeof(int));
 	while (i < num)
 	{
 		pthread_join(thread_pool[i], (void **)&hold);
 		i++;
 	}
-	free(hold);
+}
+
+void	init_arg(t_local_arg *local_arg_arr, t_thread_arg *arg, int n)
+{
+	int	i;
+
+	i = 0;
+	while(i < n)
+	{
+		local_arg_arr[i].i = i;
+		local_arg_arr[i].thread_arg = arg;
+		i++;
+	}
 }
 
 void	run_pixels(t_thread_arg	*arg, void *(*routine)(void	*))
 {
-	t_uint		i;
-	t_uint		j;
-	pthread_t	*thread_pool;
+	t_uint		pool_count;
+	pthread_t	thread_pool[N_THREAD];
+	t_local_arg	local_arg_arr[N_THREAD];
 
-	i = 0;
-	thread_pool = malloc(sizeof(pthread_t) * arg->wnd->height * arg->wnd->width);
-	while (i < arg->wnd->height)
+	pool_count = 0;
+	init_arg(local_arg_arr, arg, N_THREAD);
+	while (pool_count < N_THREAD)
 	{
-		arg->i = i;
-		j = 0;
-		while (j < arg->wnd->width)
-		{
-			arg->j = j;
-			pthread_create(&thread_pool[i * arg->wnd->width + j],
-				NULL, routine, &arg);
-			j++;
-		}
-		i++;
+		pthread_create(&thread_pool[pool_count], NULL, routine,
+			&local_arg_arr[pool_count]);
+		pool_count++;
 	}
-	join_pool(thread_pool, arg->wnd->height * arg->wnd->width);
-	free(thread_pool);
+	join_pool(thread_pool, pool_count);
 }
